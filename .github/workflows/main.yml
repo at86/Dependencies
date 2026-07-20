@@ -16,10 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         architecture: [ x64 ]
-        buildType: [ dynamic, static ]
+        buildType: [ static ]
         openmp: [ OpenMP ]
-        all: [ false, true ]
-        linkRuntime: [ false, true ]
+        all: [ true ]
+        linkRuntime: [ true ]
         exclude:
           - buildType: dynamic
             linkRuntime: true
