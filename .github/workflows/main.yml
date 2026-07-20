@@ -9,200 +9,15 @@ permissions:
 
 name: Create release
 jobs:
-
-  build-linux:
-    name: linux ${{matrix.architecture}} static
-    container:
-      image: ubuntu:20.04
-    runs-on: ubuntu-24.04
-
-    strategy:
-      fail-fast: false
-      matrix:
-        architecture: [ x64, arm64 ]
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install tools
-        run: ./.github/build/linux-${{matrix.architecture}}/install.sh
-
-      - name: Clone dependencies
-        run: ./clone-dependencies.sh
-
-      - name: Build
-        run: ./.github/build/linux-${{matrix.architecture}}/build.sh
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p Artifacts
-          cp -r /tmp/dependencies/lib Artifacts
-          cp -r /tmp/dependencies/include Artifacts
-          cd Artifacts
-          zip -r ../linux-${{matrix.architecture}}-static.zip .
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #v7.0.0
-        with:
-          name: linux-${{matrix.architecture}}-static
-          path: linux-${{matrix.architecture}}-static.zip
-
-  build-linux-musl:
-    name: linux musl ${{matrix.architecture}} static
-    container:
-      image: alpine:3.21
-    runs-on: ubuntu-24.04
-
+  build-windows:
+    name: windows ${{matrix.architecture}} ${{matrix.buildType}} ${{matrix.openmp}} ${{matrix.all == true && 'all' || ''}} ${{matrix.linkRuntime == true && 'linked runtime' || ''}}
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
         architecture: [ x64 ]
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install tools
-        run: ./.github/build/linux-musl-${{matrix.architecture}}/install.sh
-
-      - name: Clone dependencies
-        run: ./clone-dependencies.sh
-
-      - name: Build
-        run: ./.github/build/linux-musl-${{matrix.architecture}}/build.sh
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p Artifacts
-          cp -r /tmp/dependencies/lib Artifacts
-          cp -r /tmp/dependencies/lib64 Artifacts
-          cp -r /tmp/dependencies/include Artifacts
-          cd Artifacts
-          zip -r ../linux-musl-${{matrix.architecture}}-static.zip .
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: linux-musl-${{matrix.architecture}}-static
-          path: linux-musl-${{matrix.architecture}}-static.zip
-
-  build-macos-x64:
-    name: macOS x64 static
-    runs-on: macos-15-intel
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install tools
-        run: ./.github/build/macos-x64/install.sh
-
-      - name: Clone dependencies
-        run: ./clone-dependencies.sh
-
-      - name: Build
-        run: ./.github/build/macos-x64/build.sh
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p Artifacts
-          cp -r /tmp/dependencies/lib Artifacts
-          cp -r /tmp/dependencies/include Artifacts
-          cd Artifacts
-          zip -r ../macos-x64-static.zip .
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #v7.0.0
-        with:
-          name: macos-x64-static
-          path: macos-x64-static.zip
-
-  build-macos:
-    name: macOS arm64 static
-    runs-on: macos-14
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install tools
-        run: ./.github/build/macos-arm64/install.sh
-
-      - name: Clone dependencies
-        run: ./clone-dependencies.sh
-
-      - name: Build
-        run: ./.github/build/macos-arm64/build.sh
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p Artifacts
-          cp -r /tmp/dependencies/lib Artifacts
-          cp -r /tmp/dependencies/include Artifacts
-          cd Artifacts
-          zip -r ../macos-arm64-static.zip .
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #v7.0.0
-        with:
-          name: macos-arm64-static
-          path: macos-arm64-static.zip
-
-  build-wasm:
-    name: wasm ${{matrix.architecture}} static
-    container:
-      image: emscripten/emsdk:4.0.7
-    runs-on: ubuntu-24.04
-
-    strategy:
-      fail-fast: false
-      matrix:
-        architecture: [ x86 ]
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install tools
-        run: ./.github/build/wasm-${{matrix.architecture}}/install.sh
-
-      - name: Clone dependencies
-        run: ./clone-dependencies.sh
-
-      - name: Build
-        run: ./.github/build/wasm-${{matrix.architecture}}/build.sh
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p Artifacts
-          cp -r /tmp/dependencies/lib Artifacts
-          cp -r /tmp/dependencies/include Artifacts
-          cp -r /tmp/dependencies/license Artifacts
-          cd Artifacts
-          zip -r ../wasm-${{matrix.architecture}}-static.zip .
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #v7.0.0
-        with:
-          name: wasm-${{matrix.architecture}}-static
-          path: wasm-${{matrix.architecture}}-static.zip
-
-  build-windows:
-    name: windows ${{matrix.architecture}} ${{matrix.buildType}} ${{matrix.openmp}} ${{matrix.all == true && 'all' || ''}} ${{matrix.linkRuntime == true && 'linked runtime' || ''}}
-    runs-on: windows-2025-vs2026
-
-    strategy:
-      fail-fast: false
-      matrix:
-        architecture: [ x64, arm64, x86 ]
         buildType: [ dynamic, static ]
-        openmp: [ OpenMP, noOpenMP ]
+        openmp: [ OpenMP ]
         all: [ false, true ]
         linkRuntime: [ false, true ]
         exclude:
@@ -232,12 +47,12 @@ jobs:
         shell: cmd
         working-directory: Configure
         run: |
-          Configure.Release.x64.exe /noWizard /VS2026 /${{matrix.architecture}} /${{matrix.buildType}} /${{matrix.openmp}} ${{matrix.all == true && '/includeOptional /incompatibleLicense' || ''}} ${{matrix.linkRuntime == true && '/linkRuntime /includeNonWindows' || ''}}
+          Configure.Release.x64.exe /noWizard /VS2022 /${{matrix.architecture}} /${{matrix.buildType}} /${{matrix.openmp}} ${{matrix.all == true && '/includeOptional /incompatibleLicense' || ''}} ${{matrix.linkRuntime == true && '/linkRuntime /includeNonWindows' || ''}}
 
       - name: Build
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\Common7\Tools\VsDevCmd.bat"
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
           msbuild IM7.${{matrix.buildType}}.${{matrix.architecture}}.sln /verbosity:minimal /m /t:Rebuild /p:Configuration=Release,Platform=${{matrix.architecture}}
 
       - name: Prepare artifacts
@@ -259,13 +74,8 @@ jobs:
   release:
     name: Create release
     if: github.event_name == 'workflow_dispatch'
-    runs-on: windows-2025-vs2026
+    runs-on: windows-2022
     needs:
-      - build-linux
-      - build-linux-musl
-      - build-macos
-      - build-macos-x64
-      - build-wasm
       - build-windows
 
     permissions:
